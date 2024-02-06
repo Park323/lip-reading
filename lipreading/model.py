@@ -5,6 +5,7 @@ import numpy as np
 from lipreading.models.resnet import ResNet, BasicBlock
 from lipreading.models.resnet1D import ResNet1D, BasicBlock1D
 from lipreading.models.shufflenetv2 import ShuffleNetV2
+from lipreading.models.vivit import ViViT
 from lipreading.models.tcn import MultibranchTemporalConvNet, TemporalConvNet
 from lipreading.models.densetcn import DenseTemporalConvNet
 from lipreading.models.swish import Swish
@@ -99,6 +100,9 @@ class Lipreading(nn.Module):
             self.frontend_nout = 1
             self.backend_out = 512
             self.trunk = ResNet1D(BasicBlock1D, [2, 2, 2, 2], relu_type=relu_type)
+        elif self.modality == 'video' and self.backbone_type == 'vivit':
+            self.backend_out = 512
+            self.trunk = ViViT(1, 512)
         elif self.modality == 'video':
             if self.backbone_type == 'resnet':
                 self.frontend_nout = 64
@@ -158,7 +162,10 @@ class Lipreading(nn.Module):
 
 
     def forward(self, x, lengths, boundaries=None):
-        if self.modality == 'video':
+        if self.modality == 'video' and self.backbone_type == 'vivit':
+            B, C, T, H, W = x.size()
+            x, _ = self.trunk(x, lengths)
+        elif self.modality == 'video':
             B, C, T, H, W = x.size()
             x = self.frontend3D(x)
             Tnew = x.shape[2]    # outpu should be B x C2 x Tnew x H x W

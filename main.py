@@ -232,7 +232,6 @@ def get_model_from_json():
 
 
 def main():
-
     # -- logging
     save_path = get_save_folder( args)
     print(f"Model and log being saved in: {save_path}")
